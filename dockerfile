@@ -1,19 +1,21 @@
-# Use the latest Ubuntu image
-FROM ubuntu:latest
+FROM ubuntu:22.04
 
-# Update and install required packages
+# Instalar dependências
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip
+    curl \
+    openssh-server \
+    ttyd \
+    bash
 
-# Set the working directory
-WORKDIR /app
+# Criar usuário
+RUN useradd -m user && echo "user:user" | chpasswd
 
-# Install JupyterLab
-RUN pip3 install jupyterlab
+# Configurar SSH
+RUN mkdir /var/run/sshd
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 
-# Expose port 8080
-EXPOSE 8080
+# Expor porta web
+EXPOSE 10000
 
-# Start JupyterLab on port 8080 without authentication
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8080", "--no-browser", "--allow-root", "--NotebookApp.token=''"]
+# Iniciar ttyd (terminal web)
+CMD ttyd -p 10000 -u user bash
